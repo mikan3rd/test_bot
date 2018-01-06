@@ -94,8 +94,6 @@ numpy==1.13.1
 numpydoc==0.7.0
 oauth2client==1.5.2
 oauthlib==2.0.6
-odo==0.5.1
-olefile==0.44
 openpyxl==2.4.8
 packaging==16.8
 pandas==0.20.3
