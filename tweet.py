@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import json
+import re
 from requests_oauthlib import OAuth1Session
 
 import settings
@@ -19,6 +20,15 @@ def get_account():
     return json.loads(response.text)
 
 
+def get_user_timeline(screen_name):
+    endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json"
+    params = {
+        'screen_name': screen_name,
+    }
+    response = twitter.get(endpoint, params=params)
+    return json.loads(response.text)
+
+
 def search_tweet(query):
     endpoint = "https://api.twitter.com/1.1/search/tweets.json"
     params = {
@@ -33,13 +43,16 @@ def get_media_ids(tweets):
     media_ids = []
 
     for tweet in tweets:
-
-        if not tweet.get('extended_entities'):
+        if tweet.get('quoted_status'):
             tweet = tweet['quoted_status']
 
-        media_list = tweet.get('extended_entities').get('media')
+        if tweet.get('entities').get('media'):
+            media_list = tweet['entities']['media']
+        else:
+            media_list = tweet['entities']['urls']
+
         for media in media_list:
-            media_ids.append(media.get("id"))
+            media_ids.append(media.get("url"))
 
     return media_ids
 
@@ -48,10 +61,13 @@ def get_tweet_index(tweets, media_ids):
     tweet_index = 0
 
     for index, tweet in enumerate(tweets):
-        images = tweet['extended_entities']['media']
+        if tweet.get('entities').get('media'):
+            images = tweet['entities']['media']
+        else:
+            images = tweet['entities']['urls']
 
         for image in images:
-            if image['id'] in media_ids:
+            if image['url'] in media_ids:
                 break
 
         else:
@@ -63,6 +79,14 @@ def get_tweet_index(tweets, media_ids):
 
 def create_tweet_content(tweet):
     screen_name = tweet['user']['screen_name']
+
+    over_len = len(tweet['text']) - 125
+
+    if over_len > 0:
+        url_list = re.findall('https://t.co/.*', tweet['text'])
+        urls = ' '.join(url_list)
+        tweet['text'] = tweet['text'][:-(over_len + len(urls))] + "... " + urls
+
     tweet_list = []
     tweet_list.append(
         str(tweet['retweet_count']) + "RT @" + screen_name + "\n")
@@ -78,7 +102,8 @@ def create_tweet_content(tweet):
 def post_tweet(tweet):
     endpoint = "https://api.twitter.com/1.1/statuses/update.json"
     params = {'status': tweet}
-    return twitter.post(endpoint, params=params)
+    response = twitter.post(endpoint, params=params)
+    return json.loads(response.text)
 
 
 def post_follow(user_id):
@@ -90,20 +115,16 @@ def post_follow(user_id):
 if __name__ == "__main__":
     # try:
     account = get_account()
-    timeline_tweets = search_tweet(account['screen_name'])
+    timeline_tweets = get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
     tweets = search_tweet('キズナアイ filter:images min_retweets:20')
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
-
-    # for tweet in tweets:
-    #     print("RT:", tweet['retweet_count'])
-
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
-    print(tweet_content)
+    # print(tweet_content)
     post_follow(tweet['user']['id'])
-    post_tweet(tweet_content)
+    response = post_tweet(tweet_content)
     print("SUCCESS!!")
 
     # except Exception as e:
