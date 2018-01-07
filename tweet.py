@@ -89,10 +89,10 @@ def create_tweet_content(tweet):
         tweet['text'] = re.sub('(http|#|@)\S*\.\.\.', '...', tweet['text'])
 
     tweet_list = []
-    tweet_list.append("@" + screen_name + "\n")
     tweet_list.append(tweet['text'] + '\n')
+    tweet_list.append("ツイート元: @" + screen_name)
     tweet_list.append(
-        'ツイート元: https://twitter.com/' + screen_name +
+        'https://twitter.com/' + screen_name +
         '/statuses/' + str(tweet['id'])
     )
     tweet_content = '\n'.join(tweet_list)
@@ -125,6 +125,7 @@ if __name__ == "__main__":
     print(tweet_content)
     post_follow(tweet['user']['id'])
     response = post_tweet(tweet_content)
+    print(response)
 
     if response.get("errors"):
         print(response.get("errors"))
