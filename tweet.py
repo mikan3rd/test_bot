@@ -84,8 +84,7 @@ def create_tweet_content(tweet):
 
     if over_len > 0:
         url_list = re.findall('https://t.co/.*', tweet['text'])
-        urls = ' '.join(url_list)
-        tweet['text'] = tweet['text'][:-(over_len + len(urls))] + "... " + urls
+        tweet['text'] = tweet['text'][:-(over_len + len(url_list[-1]))] + "... " + url_list[-1]
 
     tweet_list = []
     tweet_list.append(
@@ -122,7 +121,7 @@ if __name__ == "__main__":
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
-    # print(tweet_content)
+    print(tweet_content)
     post_follow(tweet['user']['id'])
     response = post_tweet(tweet_content)
     print("SUCCESS!!")
