@@ -24,6 +24,7 @@ def get_user_timeline(screen_name):
     endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json"
     params = {
         'screen_name': screen_name,
+        'count': 200,
     }
     response = twitter.get(endpoint, params=params)
     return json.loads(response.text)
@@ -140,13 +141,13 @@ if __name__ == "__main__":
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
     print(tweet_content)
-    post_follow(tweet['user']['id'])
     response = post_tweet(tweet_content)
 
     if response.get("errors"):
         print(response.get("errors"))
 
     followers = get_user_followers(account['screen_name'])
+    followers.append(tweet['user'])
     nofollow_user_ids = get_not_follow_ids(followers)
 
     if nofollow_user_ids:
