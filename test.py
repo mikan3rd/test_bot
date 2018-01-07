@@ -22,9 +22,6 @@ over_len = length - 125
 
 if over_len > 0:
     url_list = re.findall('https://t.co/.*', text)
-    # text = re.sub('https://t.co/.*\n', '', text)
-    # print(text)
     print(url_list)
-    # urls = ' '.join(url_list)
     text = text[:-(over_len + len(url_list[-1]))] + "... " + url_list[-1]
     print(text)

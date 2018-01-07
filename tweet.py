@@ -11,7 +11,7 @@ twitter = OAuth1Session(
     settings.CONSUMER_SECRET,
     settings.ACCESS_TOKEN,
     settings.ACCESS_TOKEN_SECRET,
-    )
+)
 
 
 def get_account():
@@ -80,11 +80,12 @@ def get_tweet_index(tweets, media_ids):
 def create_tweet_content(tweet):
     screen_name = tweet['user']['screen_name']
 
-    over_len = len(tweet['text']) - 125
+    over_len = len(tweet['text']) - 120
 
     if over_len > 0:
         url_list = re.findall('https://t.co/.*', tweet['text'])
-        tweet['text'] = tweet['text'][:-(over_len + len(url_list[-1]))] + "... " + url_list[-1]
+        tweet['text'] = tweet['text'][:-(over_len + len(url_list[-1]))]
+        tweet['text'] += "... " + url_list[-1]
 
     tweet_list = []
     tweet_list.append(
@@ -93,7 +94,7 @@ def create_tweet_content(tweet):
     tweet_list.append(
         'ツイート元: https://twitter.com/' + screen_name +
         '/statuses/' + str(tweet['id'])
-        )
+    )
     tweet_content = '\n'.join(tweet_list)
     return tweet_content
 
@@ -124,6 +125,10 @@ if __name__ == "__main__":
     print(tweet_content)
     post_follow(tweet['user']['id'])
     response = post_tweet(tweet_content)
+
+    if response.get("errors"):
+        print(response.get("errors"))
+
     print("SUCCESS!!")
 
     # except Exception as e:
