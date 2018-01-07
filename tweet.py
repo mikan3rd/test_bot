@@ -112,6 +112,23 @@ def post_follow(user_id):
     return twitter.post(endpoint, params=params)
 
 
+def get_user_followers(screen_name):
+    endpoint = "https://api.twitter.com/1.1/followers/list.json"
+    params = {'screen_name': screen_name}
+    response = twitter.get(endpoint, params=params)
+    return json.loads(response.text).get('users')
+
+
+def get_not_follow_ids(users):
+    ids = []
+
+    for user in users:
+        if not user.get('following'):
+            ids.append(user['id'])
+
+    return ids
+
+
 if __name__ == "__main__":
     # try:
     account = get_account()
@@ -125,10 +142,16 @@ if __name__ == "__main__":
     print(tweet_content)
     post_follow(tweet['user']['id'])
     response = post_tweet(tweet_content)
-    print(response)
 
     if response.get("errors"):
         print(response.get("errors"))
+
+    followers = get_user_followers(account['screen_name'])
+    nofollow_user_ids = get_not_follow_ids(followers)
+
+    if nofollow_user_ids:
+        for id in nofollow_user_ids:
+            post_follow(id)
 
     print("SUCCESS!!")
 
