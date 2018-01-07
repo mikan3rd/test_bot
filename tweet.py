@@ -83,9 +83,10 @@ def create_tweet_content(tweet):
     over_len = len(tweet['text']) - 120
 
     if over_len > 0:
-        url_list = re.findall('https://t.co/.*', tweet['text'])
+        url_list = re.findall('https://t.co/\S*', tweet['text'])
         tweet['text'] = tweet['text'][:-(over_len + len(url_list[-1]))]
         tweet['text'] += "... " + url_list[-1]
+        tweet['text'] = re.sub('(http|#|@)\S*\.\.\.', '...', tweet['text'])
 
     tweet_list = []
     tweet_list.append("@" + screen_name + "\n")
