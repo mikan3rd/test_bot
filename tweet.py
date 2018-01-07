@@ -40,6 +40,34 @@ def search_tweet(query):
     return json.loads(response.text).get('statuses')
 
 
+def post_tweet(tweet):
+    endpoint = "https://api.twitter.com/1.1/statuses/update.json"
+    params = {'status': tweet}
+    response = twitter.post(endpoint, params=params)
+    return json.loads(response.text)
+
+
+def post_follow(user_id):
+    endpoint = "https://api.twitter.com/1.1/friendships/create.json"
+    params = {'user_id': user_id}
+    response = twitter.post(endpoint, params=params)
+    return json.loads(response.text)
+
+
+def get_user_followers(screen_name):
+    endpoint = "https://api.twitter.com/1.1/followers/list.json"
+    params = {'screen_name': screen_name}
+    response = twitter.get(endpoint, params=params)
+    return json.loads(response.text).get('users')
+
+
+def get_retweeters(id):
+    endpoint = "https://api.twitter.com/1.1/statuses/retweets/" + \
+        str(id) + ".json"
+    response = twitter.get(endpoint)
+    return json.loads(response.text)
+
+
 def get_media_ids(tweets):
     media_ids = []
 
@@ -100,31 +128,11 @@ def create_tweet_content(tweet):
     return tweet_content
 
 
-def post_tweet(tweet):
-    endpoint = "https://api.twitter.com/1.1/statuses/update.json"
-    params = {'status': tweet}
-    response = twitter.post(endpoint, params=params)
-    return json.loads(response.text)
-
-
-def post_follow(user_id):
-    endpoint = "https://api.twitter.com/1.1/friendships/create.json"
-    params = {'user_id': user_id}
-    return twitter.post(endpoint, params=params)
-
-
-def get_user_followers(screen_name):
-    endpoint = "https://api.twitter.com/1.1/followers/list.json"
-    params = {'screen_name': screen_name}
-    response = twitter.get(endpoint, params=params)
-    return json.loads(response.text).get('users')
-
-
 def get_not_follow_ids(users):
     ids = []
 
     for user in users:
-        if not user.get('following'):
+        if user.get('following') is False:
             ids.append(user['id'])
 
     return ids
@@ -146,9 +154,21 @@ if __name__ == "__main__":
     if response.get("errors"):
         print(response.get("errors"))
 
+    tweet_ids = []
+    for tweet in timeline_tweets:
+        if tweet['retweet_count'] > 0:
+            tweet_ids.append(tweet['id'])
+
+    retweeter_list = []
+    for tweet_id in tweet_ids:
+        retweeter_list += get_retweeters(tweet_id)
+
     followers = get_user_followers(account['screen_name'])
     followers.append(tweet['user'])
+    followers += retweeter_list
     nofollow_user_ids = get_not_follow_ids(followers)
+    nofollow_user_ids = list(set(nofollow_user_ids))
+    print(nofollow_user_ids)
 
     if nofollow_user_ids:
         for id in nofollow_user_ids:
