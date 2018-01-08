@@ -40,9 +40,16 @@ def search_tweet(query):
     return json.loads(response.text).get('statuses')
 
 
-def post_tweet(tweet):
+def post_tweet(
+    tweet,
+    in_reply_to_status_id=None,
+):
     endpoint = "https://api.twitter.com/1.1/statuses/update.json"
     params = {'status': tweet}
+
+    if in_reply_to_status_id:
+        params['in_reply_to_status_id'] = in_reply_to_status_id
+
     response = twitter.post(endpoint, params=params)
     return json.loads(response.text)
 
@@ -122,9 +129,8 @@ def create_tweet_content(tweet):
 
     tweet_list = []
     tweet_list.append(tweet['text'] + '\n')
-    tweet_list.append("ツイート元: @" + screen_name)
     tweet_list.append(
-        'https://twitter.com/' + screen_name +
+        'ツイート元: https://twitter.com/' + screen_name +
         '/statuses/' + str(tweet['id'])
     )
     tweet_content = '\n'.join(tweet_list)
@@ -153,7 +159,10 @@ if __name__ == "__main__":
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
     print(tweet_content)
-    response = post_tweet(tweet_content)
+    response = post_tweet(
+        tweet_content,
+        in_reply_to_status_id=tweet['id'],
+    )
 
     if response.get("errors"):
         print(response.get("errors"))
@@ -171,7 +180,6 @@ if __name__ == "__main__":
 
     followers = get_user_followers(account['screen_name'])
     followers.append(tweet['user'])
-    print(tweet['user'])
     followers += retweeter_list
     nofollow_user_ids = get_not_follow_ids(followers)
     nofollow_user_ids = list(set(nofollow_user_ids))
