@@ -129,8 +129,9 @@ def create_tweet_content(tweet):
 
     tweet_list = []
     tweet_list.append(tweet['text'] + '\n')
+    tweet_list.append("ツイート元: @" + screen_name)
     tweet_list.append(
-        'ツイート元: https://twitter.com/' + screen_name +
+        'https://twitter.com/' + screen_name +
         '/statuses/' + str(tweet['id'])
     )
     tweet_content = '\n'.join(tweet_list)
