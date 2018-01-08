@@ -154,7 +154,7 @@ if __name__ == "__main__":
     timeline_tweets = get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
     tweets = search_tweet(
-        'splatoon2 filter:videos min_retweets:50')
+        '#Splatoon2 filter:videos min_retweets:50')
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
