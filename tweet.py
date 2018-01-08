@@ -64,7 +64,10 @@ def get_user_followers(screen_name):
 def get_retweeters(id):
     endpoint = "https://api.twitter.com/1.1/statuses/retweets/" + \
         str(id) + ".json"
-    response = twitter.get(endpoint)
+    params = {
+        'trim_user': False,
+    }
+    response = twitter.get(endpoint, params=params)
     return json.loads(response.text)
 
 
@@ -161,7 +164,9 @@ if __name__ == "__main__":
 
     retweeter_list = []
     for tweet_id in tweet_ids:
-        retweeter_list += get_retweeters(tweet_id)
+        retweet_list = get_retweeters(tweet_id)
+        for retweet in retweet_list:
+            retweeter_list.append(retweet['user'])
 
     followers = get_user_followers(account['screen_name'])
     followers.append(tweet['user'])
