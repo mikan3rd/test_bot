@@ -128,6 +128,7 @@ def create_tweet_content(tweet):
         tweet['text'] = re.sub('(http|#|@)\S*\.\.\.', '...', tweet['text'])
 
     tweet_list = []
+    tweet_list.append(str(tweet['retweet_count']) + "RT!!")
     tweet_list.append(tweet['text'] + '\n')
     tweet_list.append("ツイート元: @" + screen_name)
     tweet_list.append(
