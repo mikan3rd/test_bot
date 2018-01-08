@@ -159,9 +159,9 @@ if __name__ == "__main__":
         print(response.get("errors"))
 
     tweet_ids = []
-    for tweet in timeline_tweets:
-        if tweet['retweet_count'] > 0:
-            tweet_ids.append(tweet['id'])
+    for timeline_tweet in timeline_tweets:
+        if timeline_tweet['retweet_count'] > 0:
+            tweet_ids.append(timeline_tweet['id'])
 
     retweeter_list = []
     for tweet_id in tweet_ids:
@@ -171,6 +171,7 @@ if __name__ == "__main__":
 
     followers = get_user_followers(account['screen_name'])
     followers.append(tweet['user'])
+    print(tweet['user'])
     followers += retweeter_list
     nofollow_user_ids = get_not_follow_ids(followers)
     nofollow_user_ids = list(set(nofollow_user_ids))
