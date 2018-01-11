@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import json
+import random
 import re
 from requests_oauthlib import OAuth1Session
 
@@ -97,7 +98,7 @@ def get_media_ids(tweets):
 
 
 def get_tweet_index(tweets, media_ids):
-    tweet_index = 0
+    tweet_index = random.randint(0, len(tweets))
 
     for index, tweet in enumerate(tweets):
         if tweet.get('entities').get('media'):
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     timeline_tweets = get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
     tweets = search_tweet(
-        'キズナアイ (filter:images OR filter:videos) min_retweets:100')
+        'キズナアイ (filter:images OR filter:videos) min_retweets:50')
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]

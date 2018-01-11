@@ -2,6 +2,7 @@
 
 import json
 import re
+import random
 from requests_oauthlib import OAuth1Session
 
 import settings
@@ -97,7 +98,7 @@ def get_media_ids(tweets):
 
 
 def get_tweet_index(tweets, media_ids):
-    tweet_index = 0
+    tweet_index = random.randint(0, len(tweets))
 
     for index, tweet in enumerate(tweets):
         if tweet.get('entities').get('media'):
