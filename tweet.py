@@ -3,9 +3,7 @@
 import json
 import random
 import re
-import lxml
 import requests
-from bs4 import BeautifulSoup
 from requests_oauthlib import OAuth1Session
 
 import settings
@@ -25,16 +23,6 @@ def get_user_ids_of_post_likes(post_id):
     unique_ids = list(
         set([re.findall(r'\d+', match)[0]for match in found_ids]))
     return unique_ids
-
-    # url = 'https://twitter.com/kizunaAI_images/status/951999917823856645'
-    # print(url)
-    # response = requests.get(url)
-    # soup = BeautifulSoup(response.text, "lxml")
-    # elems = soup.find_all('a')
-    # for elem in elems:
-    #     user = elem.get('data-user-id')
-    #     if user:
-    #         print(user)
 
 
 def get_account():
