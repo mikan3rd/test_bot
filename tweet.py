@@ -156,7 +156,7 @@ if __name__ == "__main__":
     timeline_tweets = get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
     tweets = search_tweet(
-        'キズナアイ (filter:images OR filter:videos) min_retweets:50')
+        '(キズナアイ OR #KizunaAI) (filter:images OR filter:videos) min_retweets:50')
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
