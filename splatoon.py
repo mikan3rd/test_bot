@@ -2,6 +2,7 @@
 
 import json
 import re
+import requests
 import random
 from requests_oauthlib import OAuth1Session
 
@@ -13,6 +14,15 @@ twitter = OAuth1Session(
     settings.ACCESS_TOKEN_SPLATOON,
     settings.ACCESS_TOKEN_SECRET_SPLATOON,
 )
+
+
+def get_user_ids_of_post_likes(post_id):
+    url = 'https://twitter.com/i/activity/favorited_popup?id=' + str(post_id)
+    json_data = requests.get(url).text
+    found_ids = re.findall(r'data-user-id=\\"+\d+', json_data)
+    unique_ids = list(
+        set([re.findall(r'\d+', match)[0]for match in found_ids]))
+    return unique_ids
 
 
 def get_account():
@@ -64,7 +74,10 @@ def post_follow(user_id):
 
 def get_user_followers(screen_name):
     endpoint = "https://api.twitter.com/1.1/followers/list.json"
-    params = {'screen_name': screen_name}
+    params = {
+        'screen_name': screen_name,
+        'count': 200,
+    }
     response = twitter.get(endpoint, params=params)
     return json.loads(response.text).get('users')
 
@@ -140,7 +153,7 @@ def create_tweet_content(tweet):
     return tweet_content
 
 
-def get_not_follow_ids(users):
+def get_not_follow_ids_by_user(users):
     ids = []
 
     for user in users:
@@ -150,11 +163,17 @@ def get_not_follow_ids(users):
     return ids
 
 
+def get_not_follow_ids(followers, ids):
+    follow_ids = {follower['id'] for follower in followers}
+    return list(set(ids) - follow_ids)
+
+
 if __name__ == "__main__":
     # try:
     account = get_account()
     timeline_tweets = get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
+
     tweets = search_tweet(
         '#Splatoon2 filter:videos min_retweets:50')
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
@@ -162,6 +181,7 @@ if __name__ == "__main__":
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
     print(tweet_content)
+
     response = post_tweet(
         tweet_content,
         in_reply_to_status_id=tweet['id'],
@@ -176,15 +196,23 @@ if __name__ == "__main__":
             tweet_ids.append(timeline_tweet['id'])
 
     retweeter_list = []
+    like_user_ids = []
+
     for tweet_id in tweet_ids:
         retweet_list = get_retweeters(tweet_id)
+        like_user_ids += get_user_ids_of_post_likes(tweet_id)
+
         for retweet in retweet_list:
             retweeter_list.append(retweet['user'])
 
     followers = get_user_followers(account['screen_name'])
-    followers.append(tweet['user'])
-    followers += retweeter_list
-    nofollow_user_ids = get_not_follow_ids(followers)
+
+    users = []
+    users += followers
+    users.append(tweet['user'])
+    users += retweeter_list
+    nofollow_user_ids = get_not_follow_ids_by_user(followers)
+    nofollow_user_ids += get_not_follow_ids(followers, like_user_ids)
     nofollow_user_ids = list(set(nofollow_user_ids))
     print(nofollow_user_ids)
 
