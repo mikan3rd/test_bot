@@ -1,78 +1,10 @@
 # coding: utf-8
 
-import json
 import random
 import re
 import requests
 
-
-# twitterAPI
-def get_account(twitter):
-    endpoint = 'https://api.twitter.com/1.1/account/settings.json'
-    response = twitter.get(endpoint)
-    return json.loads(response.text)
-
-
-def get_user_timeline(twitter, screen_name):
-    endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json"
-    params = {
-        'screen_name': screen_name,
-        'count': 200,
-    }
-    response = twitter.get(endpoint, params=params)
-    return json.loads(response.text)
-
-
-def search_tweet(twitter, query):
-    endpoint = "https://api.twitter.com/1.1/search/tweets.json"
-    params = {
-        'q': query,
-        'count': 100,
-    }
-    response = twitter.get(endpoint, params=params)
-    return json.loads(response.text).get('statuses')
-
-
-def post_tweet(
-    twitter,
-    tweet,
-    in_reply_to_status_id=None,
-):
-    endpoint = "https://api.twitter.com/1.1/statuses/update.json"
-    params = {'status': tweet}
-
-    if in_reply_to_status_id:
-        params['in_reply_to_status_id'] = in_reply_to_status_id
-
-    response = twitter.post(endpoint, params=params)
-    return json.loads(response.text)
-
-
-def post_follow(twitter, user_id):
-    endpoint = "https://api.twitter.com/1.1/friendships/create.json"
-    params = {'user_id': user_id}
-    response = twitter.post(endpoint, params=params)
-    return json.loads(response.text)
-
-
-def get_user_followers(twitter, screen_name):
-    endpoint = "https://api.twitter.com/1.1/followers/list.json"
-    params = {
-        'screen_name': screen_name,
-        'count': 200,
-    }
-    response = twitter.get(endpoint, params=params)
-    return json.loads(response.text).get('users')
-
-
-def get_retweeters(twitter, id):
-    endpoint = "https://api.twitter.com/1.1/statuses/retweets/" + \
-        str(id) + ".json"
-    params = {
-        'trim_user': False,
-    }
-    response = twitter.get(endpoint, params=params)
-    return json.loads(response.text)
+from api_twitter import TwitterApi
 
 
 # スクレイピング
@@ -164,19 +96,20 @@ def get_not_follow_ids(followers, ids):
 
 def tweet_and_follow(twitter, query):
     # try:
-    account = get_account(twitter)
-    timeline_tweets = get_user_timeline(twitter, account['screen_name'])
+    twitter_api = TwitterApi(twitter)
+    account = twitter_api.get_account()
+
+    timeline_tweets = twitter_api.get_user_timeline(account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
 
-    tweets = search_tweet(twitter, query)
+    tweets = twitter_api.search_tweet(query)
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
     print(tweet_content)
 
-    response = post_tweet(
-        twitter,
+    response = twitter_api.post_tweet(
         tweet_content,
         in_reply_to_status_id=tweet['id'],
     )
@@ -193,13 +126,13 @@ def tweet_and_follow(twitter, query):
     like_user_ids = []
 
     for tweet_id in tweet_ids:
-        retweet_list = get_retweeters(twitter, tweet_id)
+        retweet_list = twitter_api.get_retweeters(tweet_id)
         like_user_ids += get_user_ids_of_post_likes(tweet_id)
 
         for retweet in retweet_list:
             retweeter_list.append(retweet['user'])
 
-    followers = get_user_followers(twitter, account['screen_name'])
+    followers = twitter_api.get_user_followers(account['screen_name'])
 
     users = []
     users += followers
@@ -212,7 +145,7 @@ def tweet_and_follow(twitter, query):
 
     if nofollow_user_ids:
         for id in nofollow_user_ids:
-            post_follow(twitter, id)
+            twitter_api.post_follow(id)
 
     print("SUCCESS!!")
 
