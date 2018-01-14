@@ -4,34 +4,16 @@ import json
 import random
 import re
 import requests
-from requests_oauthlib import OAuth1Session
-
-import settings
-
-twitter = OAuth1Session(
-    settings.CONSUMER_KEY,
-    settings.CONSUMER_SECRET,
-    settings.ACCESS_TOKEN,
-    settings.ACCESS_TOKEN_SECRET,
-)
 
 
-def get_user_ids_of_post_likes(post_id):
-    url = 'https://twitter.com/i/activity/favorited_popup?id=' + str(post_id)
-    json_data = requests.get(url).text
-    found_ids = re.findall(r'data-user-id=\\"+\d+', json_data)
-    unique_ids = list(
-        set([re.findall(r'\d+', match)[0]for match in found_ids]))
-    return unique_ids
-
-
-def get_account():
+# twitterAPI
+def get_account(twitter):
     endpoint = 'https://api.twitter.com/1.1/account/settings.json'
     response = twitter.get(endpoint)
     return json.loads(response.text)
 
 
-def get_user_timeline(screen_name):
+def get_user_timeline(twitter, screen_name):
     endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json"
     params = {
         'screen_name': screen_name,
@@ -41,7 +23,7 @@ def get_user_timeline(screen_name):
     return json.loads(response.text)
 
 
-def search_tweet(query):
+def search_tweet(twitter, query):
     endpoint = "https://api.twitter.com/1.1/search/tweets.json"
     params = {
         'q': query,
@@ -52,6 +34,7 @@ def search_tweet(query):
 
 
 def post_tweet(
+    twitter,
     tweet,
     in_reply_to_status_id=None,
 ):
@@ -65,14 +48,14 @@ def post_tweet(
     return json.loads(response.text)
 
 
-def post_follow(user_id):
+def post_follow(twitter, user_id):
     endpoint = "https://api.twitter.com/1.1/friendships/create.json"
     params = {'user_id': user_id}
     response = twitter.post(endpoint, params=params)
     return json.loads(response.text)
 
 
-def get_user_followers(screen_name):
+def get_user_followers(twitter, screen_name):
     endpoint = "https://api.twitter.com/1.1/followers/list.json"
     params = {
         'screen_name': screen_name,
@@ -82,7 +65,7 @@ def get_user_followers(screen_name):
     return json.loads(response.text).get('users')
 
 
-def get_retweeters(id):
+def get_retweeters(twitter, id):
     endpoint = "https://api.twitter.com/1.1/statuses/retweets/" + \
         str(id) + ".json"
     params = {
@@ -92,6 +75,17 @@ def get_retweeters(id):
     return json.loads(response.text)
 
 
+# スクレイピング
+def get_user_ids_of_post_likes(post_id):
+    url = 'https://twitter.com/i/activity/favorited_popup?id=' + str(post_id)
+    json_data = requests.get(url).text
+    found_ids = re.findall(r'data-user-id=\\"+\d+', json_data)
+    unique_ids = list(
+        set([re.findall(r'\d+', match)[0]for match in found_ids]))
+    return unique_ids
+
+
+# その他
 def get_media_ids(tweets):
     media_ids = []
 
@@ -168,14 +162,13 @@ def get_not_follow_ids(followers, ids):
     return list(set(ids) - follow_ids)
 
 
-if __name__ == "__main__":
+def tweet_and_follow(twitter, query):
     # try:
-    account = get_account()
-    timeline_tweets = get_user_timeline(account['screen_name'])
+    account = get_account(twitter)
+    timeline_tweets = get_user_timeline(twitter, account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
 
-    tweets = search_tweet(
-        '(キズナアイ OR #KizunaAI) (filter:images OR filter:videos) min_retweets:50')
+    tweets = search_tweet(twitter, query)
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
     index = get_tweet_index(tweets, media_ids)
     tweet = tweets[index]
@@ -183,6 +176,7 @@ if __name__ == "__main__":
     print(tweet_content)
 
     response = post_tweet(
+        twitter,
         tweet_content,
         in_reply_to_status_id=tweet['id'],
     )
@@ -199,13 +193,13 @@ if __name__ == "__main__":
     like_user_ids = []
 
     for tweet_id in tweet_ids:
-        retweet_list = get_retweeters(tweet_id)
+        retweet_list = get_retweeters(twitter, tweet_id)
         like_user_ids += get_user_ids_of_post_likes(tweet_id)
 
         for retweet in retweet_list:
             retweeter_list.append(retweet['user'])
 
-    followers = get_user_followers(account['screen_name'])
+    followers = get_user_followers(twitter, account['screen_name'])
 
     users = []
     users += followers
@@ -218,7 +212,7 @@ if __name__ == "__main__":
 
     if nofollow_user_ids:
         for id in nofollow_user_ids:
-            post_follow(id)
+            post_follow(twitter, id)
 
     print("SUCCESS!!")
 
