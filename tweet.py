@@ -4,8 +4,6 @@ import random
 import re
 import requests
 
-from api_twitter import TwitterApi
-
 
 # スクレイピング
 def get_user_ids_of_post_likes(post_id):
@@ -14,6 +12,7 @@ def get_user_ids_of_post_likes(post_id):
     found_ids = re.findall(r'data-user-id=\\"+\d+', json_data)
     unique_ids = list(
         set([re.findall(r'\d+', match)[0]for match in found_ids]))
+    print("scraping SUCCESS")
     return unique_ids
 
 
@@ -68,7 +67,6 @@ def create_tweet_content(tweet):
         tweet['text'] = re.sub('(http|#|@)\S*\.\.\.', '...', tweet['text'])
 
     tweet_list = []
-    tweet_list.append(str(tweet['retweet_count']) + "RT!!\n")
     tweet_list.append(tweet['text'] + '\n')
     tweet_list.append("ツイート元: @" + screen_name)
     tweet_list.append(
@@ -83,7 +81,9 @@ def get_not_follow_ids_by_user(users):
     ids = []
 
     for user in users:
-        if user.get('following') is False:
+        following = user.get('following')
+        follow_request_sent = user.get('follow_request_sent')
+        if following is False and follow_request_sent is False:
             ids.append(user['id'])
 
     return ids
@@ -94,9 +94,8 @@ def get_not_follow_ids(followers, ids):
     return list(set(ids) - follow_ids)
 
 
-def tweet_and_follow(twitter, query):
+def tweet_and_follow(twitter_api, query):
     # try:
-    twitter_api = TwitterApi(twitter)
     account = twitter_api.get_account()
 
     timeline_tweets = twitter_api.get_user_timeline(account['screen_name'])
@@ -114,8 +113,8 @@ def tweet_and_follow(twitter, query):
         in_reply_to_status_id=tweet['id'],
     )
 
-    if response.get("errors"):
-        print(response.get("errors"))
+    if response.get("errors") is None:
+        print("Tweet SUCCESS!!")
 
     tweet_ids = []
     for timeline_tweet in timeline_tweets:
@@ -138,7 +137,7 @@ def tweet_and_follow(twitter, query):
     users += followers
     users.append(tweet['user'])
     users += retweeter_list
-    nofollow_user_ids = get_not_follow_ids_by_user(followers)
+    nofollow_user_ids = get_not_follow_ids_by_user(users)
     nofollow_user_ids += get_not_follow_ids(followers, like_user_ids)
     nofollow_user_ids = list(set(nofollow_user_ids))
     print(nofollow_user_ids)
@@ -147,7 +146,37 @@ def tweet_and_follow(twitter, query):
         for id in nofollow_user_ids:
             twitter_api.post_follow(id)
 
-    print("SUCCESS!!")
+    print("Follow SUCCESS!!")
 
     # except Exception as e:
     #     print("ERROR:", e)
+
+
+def unfollow(twitter_api):
+    account = twitter_api.get_account()
+    profile = twitter_api.get_user_profile(screen_name=account['screen_name'])
+
+    if profile.get('followers_count') > profile.get('friends_count') - 50:
+        print("Don't have to Unfollow!!")
+        return
+
+    followings = twitter_api.get_user_followings(account['screen_name'])
+    print("followings:", len(followings))
+    following_id_list = [
+        str(following.get('id'))
+        for following in followings[100:]
+    ]
+    following_ids = ','.join(following_id_list)
+    user_list = twitter_api.get_friendships_to_me(following_ids)
+    not_followed_id_list = [
+        user.get('id') for user in user_list
+        if "followed_by" not in user.get('connections')
+    ]
+    for id in not_followed_id_list:
+        response = twitter_api.post_unfollow(id)
+        if response.get('screen_name'):
+            print(response.get('screen_name'))
+        else:
+            break
+
+    print("Unfollow SUCCESS!!")

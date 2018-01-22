@@ -3,7 +3,8 @@
 from requests_oauthlib import OAuth1Session
 
 import settings
-from tweet import tweet_and_follow
+from tweet import tweet_and_follow, unfollow
+from api_twitter import TwitterApi
 
 if __name__ == "__main__":
 
@@ -15,7 +16,11 @@ if __name__ == "__main__":
         settings.ACCESS_TOKEN_SPLATOON,
         settings.ACCESS_TOKEN_SECRET_SPLATOON,
     )
+
+    twitter_api = TwitterApi(twitter)
+
     query = '#Splatoon2 filter:videos min_retweets:50'
     print("query:", query)
 
-    tweet_and_follow(twitter, query)
+    unfollow(twitter_api)
+    tweet_and_follow(twitter_api, query)

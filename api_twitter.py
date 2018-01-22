@@ -47,7 +47,27 @@ class TwitterApi:
         endpoint = "https://api.twitter.com/1.1/friendships/create.json"
         params = {'user_id': user_id}
         response = self.api.post(endpoint, params=params)
+        self.confirm_error(response)
         return json.loads(response.text)
+
+    def post_unfollow(self, user_id):
+        endpoint = 'https://api.twitter.com/1.1/friendships/destroy.json'
+        params = {'user_id': user_id}
+        response = self.api.post(endpoint, params=params)
+        self.confirm_error(response)
+        return json.loads(response.text)
+
+    def get_user_followings(self, screen_name):
+        endpoint = 'https://api.twitter.com/1.1/friends/list.json'
+        params = {
+            'screen_name': screen_name,
+            'count': 200,
+            'skip_status': True,
+            'include_user_entities': False,
+        }
+        response = self.api.get(endpoint, params=params)
+        self.confirm_error(response)
+        return json.loads(response.text).get('users')
 
     def get_user_followers(self, screen_name):
         endpoint = "https://api.twitter.com/1.1/followers/list.json"
@@ -56,6 +76,7 @@ class TwitterApi:
             'count': 200,
         }
         response = self.api.get(endpoint, params=params)
+        self.confirm_error(response)
         return json.loads(response.text).get('users')
 
     def get_retweeters(self, id):
@@ -65,4 +86,34 @@ class TwitterApi:
             'trim_user': False,
         }
         response = self.api.get(endpoint, params=params)
+        self.confirm_error(response)
         return json.loads(response.text)
+
+    def get_friendships_to_me(self, ids):
+        endpoint = 'https://api.twitter.com/1.1/friendships/lookup.json'
+        params = {
+            'user_id': ids,
+        }
+        response = self.api.get(endpoint, params=params)
+        self.confirm_error(response)
+        return json.loads(response.text)
+
+    def get_user_profile(self, user_id=None, screen_name=None):
+        endpoint = 'https://api.twitter.com/1.1/users/show.json'
+        params = {}
+        if user_id:
+            params['user_id'] = user_id
+        elif screen_name:
+            params['screen_name'] = screen_name
+        response = self.api.get(endpoint, params=params)
+        self.confirm_error(response)
+        return json.loads(response.text)
+
+    def confirm_error(self, raw_response):
+        response = json.loads(raw_response.text)
+        if isinstance(response, dict) and response.get("errors"):
+            print(response.get("errors"))
+            return False
+        else:
+            print("request OK")
+            return True
