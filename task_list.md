@@ -2,8 +2,9 @@
 
 ## Twitter
 - [ ] ツイートとフォローを分ける
-- [ ] media-idをparamsで渡すようにする
-- [ ] リフォローの処理を追加する
+- [x] media-idをparamsで渡すようにする
+- [x] リフォローの処理を追加する
+- [ ] ブロックされている時の処理を追記
 - [ ] フォロー時のresponseを確認(レート制限)
 - [ ] serachAPIをグレードアップできるか試す
 - [ ] 動画の再生回数を取得できる？(http://support.gnip.com/apis/engagement_api/api_reference.html#Totals)

@@ -4,6 +4,8 @@ import random
 import re
 import requests
 
+from pprint import pprint
+
 
 # スクレイピング
 def get_user_ids_of_post_likes(post_id):
@@ -21,16 +23,22 @@ def get_media_ids(tweets):
     media_ids = []
 
     for tweet in tweets:
+
         if tweet.get('quoted_status'):
             tweet = tweet['quoted_status']
 
-        if tweet.get('entities').get('media'):
-            media_list = tweet['entities']['media']
-        else:
-            media_list = tweet['entities']['urls']
+        media_list = get_media_from_tweet(tweet)
+
+        if media_list is None:
+            print("mine: NOT FOUND")
+            pprint(tweet)
+            continue
 
         for media in media_list:
-            media_ids.append(media.get("url"))
+            if media.get('type') == 'video':
+                media_ids.append(get_video_info(media.get("video_info")))
+            else:
+                media_ids.append(media.get("url"))
 
     return media_ids
 
@@ -39,13 +47,19 @@ def get_tweet_index(tweets, media_ids):
     tweet_index = random.randint(0, len(tweets))
 
     for index, tweet in enumerate(tweets):
-        if tweet.get('entities').get('media'):
-            images = tweet['entities']['media']
-        else:
-            images = tweet['entities']['urls']
 
-        for image in images:
-            if image['url'] in media_ids:
+        media_list = get_media_from_tweet(tweet)
+
+        if media_list is None:
+            print("search: NOT FOUND")
+            continue
+
+        for media in media_list:
+            url = media.get("url")
+            if media.get('type') == 'video':
+                url = get_video_info(media.get("video_info"))
+
+            if url in media_ids:
                 break
 
         else:
@@ -56,16 +70,29 @@ def get_tweet_index(tweets, media_ids):
 
 
 def create_tweet_content(tweet):
-    screen_name = tweet['user']['screen_name']
+    url_list = re.findall('https://t.co/\S*', tweet['text'])
+    tweet['text'] = tweet['text'][:-(len(url_list[-1]))]
 
-    over_len = len(tweet['text']) - 120
+    over_len = len(tweet['text']) - 100
 
     if over_len > 0:
-        url_list = re.findall('https://t.co/\S*', tweet['text'])
-        tweet['text'] = tweet['text'][:-(over_len + len(url_list[-1]))]
-        tweet['text'] += "... " + url_list[-1]
+        print("Too long!!")
+        tweet['text'] = tweet['text'][:-over_len]
+        tweet['text'] += "... "
         tweet['text'] = re.sub('(http|#|@)\S*\.\.\.', '...', tweet['text'])
 
+    media_list = get_media_from_tweet(tweet)
+
+    url_list = []
+    for media in media_list:
+        if media.get('type') == 'video':
+            url_list.append(get_video_info(media.get("video_info")))
+        else:
+            url_list.append(media.get("url"))
+
+    urls = ' '.join(url_list)
+
+    screen_name = tweet['user']['screen_name']
     tweet_list = []
     tweet_list.append(tweet['text'] + '\n')
     tweet_list.append("ツイート元: @" + screen_name)
@@ -73,8 +100,32 @@ def create_tweet_content(tweet):
         'https://twitter.com/' + screen_name +
         '/statuses/' + str(tweet['id'])
     )
+    tweet_list.append(urls)
     tweet_content = '\n'.join(tweet_list)
     return tweet_content
+
+
+def get_media_from_tweet(tweet):
+    extended_entities = tweet.get('extended_entities')
+    if extended_entities:
+        return extended_entities.get('media')
+
+    urls = tweet.get('entities').get('urls')
+    if urls:
+        return urls
+
+    return None
+
+
+def get_video_info(video_info):
+    variants = video_info.get('variants')
+    video_list = []
+    for variant in variants:
+        if variant.get('bitrate'):
+            video_list.append(variant)
+
+    video_list = sorted(video_list, key=lambda k: k['bitrate'], reverse=True)
+    return video_list[0]['url']
 
 
 def get_not_follow_ids_by_user(users):
@@ -98,7 +149,8 @@ def tweet_and_follow(twitter_api, query):
     # try:
     account = twitter_api.get_account()
 
-    timeline_tweets = twitter_api.get_user_timeline(account['screen_name'])
+    timeline_tweets = twitter_api.get_user_timeline(
+        account['screen_name'])
     media_ids = get_media_ids(timeline_tweets)
 
     tweets = twitter_api.search_tweet(query)
@@ -109,12 +161,15 @@ def tweet_and_follow(twitter_api, query):
     print(tweet_content)
 
     response = twitter_api.post_tweet(
-        tweet_content,
+        status=tweet_content,
         in_reply_to_status_id=tweet['id'],
     )
 
     if response.get("errors") is None:
         print("Tweet SUCCESS!!")
+
+    else:
+        print(response.get("errors"))
 
     tweet_ids = []
     for timeline_tweet in timeline_tweets:
@@ -127,6 +182,9 @@ def tweet_and_follow(twitter_api, query):
     for tweet_id in tweet_ids:
         retweet_list = twitter_api.get_retweeters(tweet_id)
         like_user_ids += get_user_ids_of_post_likes(tweet_id)
+
+        if retweet_list.get('errors'):
+            break
 
         for retweet in retweet_list:
             retweeter_list.append(retweet['user'])
@@ -144,7 +202,12 @@ def tweet_and_follow(twitter_api, query):
 
     if nofollow_user_ids:
         for id in nofollow_user_ids:
-            twitter_api.post_follow(id)
+            response = twitter_api.post_follow(id)
+            errors = response.get("errors")
+            if errors:
+                code = [error.get('code') for error in errors]
+                if 161 in code:
+                    break
 
     print("Follow SUCCESS!!")
 

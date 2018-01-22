@@ -11,11 +11,11 @@ class TwitterApi:
         response = self.api.get(endpoint)
         return json.loads(response.text)
 
-    def get_user_timeline(self, screen_name):
+    def get_user_timeline(self, screen_name, count=200):
         endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json"
         params = {
             'screen_name': screen_name,
-            'count': 200,
+            'count': count,
         }
         response = self.api.get(endpoint, params=params)
         return json.loads(response.text)
@@ -31,14 +31,18 @@ class TwitterApi:
 
     def post_tweet(
         self,
-        tweet,
+        status,
+        media_ids=None,
         in_reply_to_status_id=None,
     ):
         endpoint = "https://api.twitter.com/1.1/statuses/update.json"
-        params = {'status': tweet}
+        params = {'status': status}
 
         if in_reply_to_status_id:
             params['in_reply_to_status_id'] = in_reply_to_status_id
+
+        if media_ids:
+            params['media_ids'] = media_ids
 
         response = self.api.post(endpoint, params=params)
         return json.loads(response.text)
