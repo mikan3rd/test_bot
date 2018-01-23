@@ -51,7 +51,7 @@ class TwitterApi:
         return json.loads(response.text)
 
     def post_follow(self, user_id):
-        if self.follow_count > 15:
+        if self.follow_count > 13:
             return {'errors': [{'code': '500'}]}
 
         endpoint = "https://api.twitter.com/1.1/friendships/create.json"
@@ -62,7 +62,7 @@ class TwitterApi:
         return json.loads(response.text)
 
     def post_unfollow(self, user_id):
-        if self.unfollow_count > 15:
+        if self.unfollow_count > 13:
             return {'errors': [{'code': '500'}]}
 
         endpoint = 'https://api.twitter.com/1.1/friendships/destroy.json'
@@ -95,7 +95,7 @@ class TwitterApi:
         return json.loads(response.text).get('users')
 
     def get_retweeters(self, id):
-        if self.retweeter_count > 15:
+        if self.retweeter_count > 13:
             return {'errors': [{'code': '500'}]}
 
         endpoint = "https://api.twitter.com/1.1/statuses/retweets/" + \
