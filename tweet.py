@@ -43,7 +43,7 @@ def get_media_ids(tweets):
     return media_ids
 
 
-def get_tweet_index(tweets, media_ids):
+def get_tweet_index(tweets, media_ids, twitter_api):
     tweet_index = random.randint(0, len(tweets))
 
     for index, tweet in enumerate(tweets):
@@ -63,6 +63,10 @@ def get_tweet_index(tweets, media_ids):
                 break
 
         else:
+            response = twitter_api.post_follow(tweet['user']['id'])
+            if response.get('errors'):
+                continue
+
             tweet_index = index
             break
 
@@ -155,7 +159,7 @@ def tweet_and_follow(twitter_api, query):
 
     tweets = twitter_api.search_tweet(query)
     tweets = sorted(tweets, key=lambda k: k['retweet_count'], reverse=True)
-    index = get_tweet_index(tweets, media_ids)
+    index = get_tweet_index(tweets, media_ids, twitter_api)
     tweet = tweets[index]
     tweet_content = create_tweet_content(tweet)
     print(tweet_content)
@@ -193,7 +197,6 @@ def tweet_and_follow(twitter_api, query):
 
     users = []
     users += followers
-    users.append(tweet['user'])
     users += retweeter_list
     nofollow_user_ids = get_not_follow_ids_by_user(users)
     nofollow_user_ids += get_not_follow_ids(followers, like_user_ids)
