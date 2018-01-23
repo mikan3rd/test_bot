@@ -24,5 +24,5 @@ if __name__ == "__main__":
         ' min_retweets:100'
     print("query:", query)
 
-    unfollow(twitter_api)
     tweet_and_follow(twitter_api, query)
+    unfollow(twitter_api)

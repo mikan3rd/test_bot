@@ -22,5 +22,5 @@ if __name__ == "__main__":
     query = '#Splatoon2 filter:videos min_retweets:50'
     print("query:", query)
 
-    unfollow(twitter_api)
     tweet_and_follow(twitter_api, query)
+    unfollow(twitter_api)
