@@ -31,7 +31,6 @@ def get_media_ids(tweets):
 
         if media_list is None:
             print("mine: NOT FOUND")
-            pprint(tweet)
             continue
 
         for media in media_list:
@@ -134,13 +133,11 @@ def get_video_info(video_info):
 
 def get_not_follow_ids_by_user(users):
     ids = []
-
     for user in users:
         following = user.get('following')
         follow_request_sent = user.get('follow_request_sent')
         if following is False and follow_request_sent is False:
             ids.append(user['id'])
-
     return ids
 
 
@@ -187,19 +184,20 @@ def tweet_and_follow(twitter_api, query):
         retweet_list = twitter_api.get_retweeters(tweet_id)
         like_user_ids += get_user_ids_of_post_likes(tweet_id)
 
-        if isinstance(response, dict) and response.get("errors"):
+        if isinstance(retweet_list, dict) and retweet_list.get("errors"):
             break
 
         for retweet in retweet_list:
             retweeter_list.append(retweet['user'])
 
     followers = twitter_api.get_user_followers(account['screen_name'])
+    followings = twitter_api.get_user_followings(account['screen_name'])
 
     users = []
     users += followers
     users += retweeter_list
     nofollow_user_ids = get_not_follow_ids_by_user(users)
-    nofollow_user_ids += get_not_follow_ids(followers, like_user_ids)
+    nofollow_user_ids += get_not_follow_ids(followings, like_user_ids)
     nofollow_user_ids = list(set(nofollow_user_ids))
     print(nofollow_user_ids)
 
@@ -209,7 +207,7 @@ def tweet_and_follow(twitter_api, query):
             errors = response.get("errors")
             if errors:
                 code = [error.get('code') for error in errors]
-                if 161 in code:
+                if 161 in code or 500 in code:
                     break
 
     print("Follow SUCCESS!!")
