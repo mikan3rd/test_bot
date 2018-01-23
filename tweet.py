@@ -183,7 +183,7 @@ def tweet_and_follow(twitter_api, query):
         retweet_list = twitter_api.get_retweeters(tweet_id)
         like_user_ids += get_user_ids_of_post_likes(tweet_id)
 
-        if retweet_list.get('errors'):
+        if isinstance(response, dict) and response.get("errors"):
             break
 
         for retweet in retweet_list:
