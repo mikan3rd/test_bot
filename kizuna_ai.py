@@ -25,4 +25,4 @@ if __name__ == "__main__":
     print("query:", query)
 
     tweet_and_follow(twitter_api, query)
-    # unfollow(twitter_api)
+    unfollow(twitter_api)

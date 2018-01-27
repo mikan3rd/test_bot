@@ -5,7 +5,6 @@ class TwitterApi:
 
     def __init__(self, twitter):
         self.api = twitter
-        self.follow_count = 0
         self.unfollow_count = 0
         self.retweeter_count = 0
 
@@ -51,14 +50,10 @@ class TwitterApi:
         return json.loads(response.text)
 
     def post_follow(self, user_id):
-        if self.follow_count > 15:
-            return {'errors': [{'code': '500'}]}
-
         endpoint = "https://api.twitter.com/1.1/friendships/create.json"
         params = {'user_id': user_id}
         response = self.api.post(endpoint, params=params)
         self.confirm_error(response)
-        self.follow_count += 1
         return json.loads(response.text)
 
     def post_unfollow(self, user_id):
