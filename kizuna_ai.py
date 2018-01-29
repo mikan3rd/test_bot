@@ -19,9 +19,7 @@ if __name__ == "__main__":
 
     twitter_api = TwitterApi(twitter)
 
-    query = '(キズナアイ OR #KizunaAI)' + \
-        ' (filter:images OR filter:videos)' + \
-        ' min_retweets:100'
+    query = '(#キズナアイ OR #KizunaAI OR #輝夜月 OR #SiroArt OR #ミライアカリ OR #バーチャルのじゃロリ狐娘youtuberおじさん OR #のらきゃっと) (filter:images OR filter:videos) min_retweets:100'
     print("query:", query)
 
     tweet_and_follow(twitter_api, query)
