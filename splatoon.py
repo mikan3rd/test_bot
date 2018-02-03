@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     twitter_api = TwitterApi(twitter)
 
-    query = '#Splatoon2 filter:videos min_retweets:50'
+    query = '#Splatoon2 filter:videos min_retweets:40'
     print("query:", query)
 
     tweet_and_follow(twitter_api, query)
