@@ -76,7 +76,7 @@ def create_tweet_content(tweet):
     url_list = re.findall('https://t.co/\S*', tweet['text'])
     tweet['text'] = tweet['text'][:-(len(url_list[-1]))]
 
-    over_len = len(tweet['text']) - 100
+    over_len = len(tweet['text']) - 80
 
     if over_len > 0:
         print("Too long!!")
