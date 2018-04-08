@@ -46,6 +46,9 @@ words = [
     "#みとあーと",
     "#猫宮ひなた",
     "#HinataCat",
+    "#soraArt",
+    "#ばあちゃる",
+    "#鳩羽つぐ",
 ]
 query = '(%s) (filter:images OR filter:videos) min_retweets:100' \
     % (' OR '.join(words))
