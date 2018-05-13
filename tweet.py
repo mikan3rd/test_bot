@@ -172,45 +172,45 @@ def tweet_and_follow(twitter_api, query):
     else:
         print(response.get("errors"))
 
-    tweet_ids = []
-    for timeline_tweet in timeline_tweets:
-        if timeline_tweet['retweet_count'] > 0:
-            tweet_ids.append(timeline_tweet['id'])
+    # tweet_ids = []
+    # for timeline_tweet in timeline_tweets:
+    #     if timeline_tweet['retweet_count'] > 0:
+    #         tweet_ids.append(timeline_tweet['id'])
 
-    retweeter_list = []
-    like_user_ids = []
+    # retweeter_list = []
+    # like_user_ids = []
 
-    for tweet_id in tweet_ids:
-        retweet_list = twitter_api.get_retweeters(tweet_id)
-        like_user_ids += get_user_ids_of_post_likes(tweet_id)
+    # for tweet_id in tweet_ids:
+    #     retweet_list = twitter_api.get_retweeters(tweet_id)
+    #     like_user_ids += get_user_ids_of_post_likes(tweet_id)
 
-        if isinstance(retweet_list, dict) and retweet_list.get("errors"):
-            break
+    #     if isinstance(retweet_list, dict) and retweet_list.get("errors"):
+    #         break
 
-        for retweet in retweet_list:
-            retweeter_list.append(retweet['user'])
+    #     for retweet in retweet_list:
+    #         retweeter_list.append(retweet['user'])
 
-    followers = twitter_api.get_user_followers(account['screen_name'])
-    followings = twitter_api.get_user_followings(account['screen_name'])
+    # followers = twitter_api.get_user_followers(account['screen_name'])
+    # followings = twitter_api.get_user_followings(account['screen_name'])
 
-    users = []
-    users += followers
-    users += retweeter_list
-    nofollow_user_ids = get_not_follow_ids_by_user(users)
-    nofollow_user_ids += get_not_follow_ids(followings, like_user_ids)
-    nofollow_user_ids = list(set(nofollow_user_ids))
-    print(nofollow_user_ids)
+    # users = []
+    # users += followers
+    # users += retweeter_list
+    # nofollow_user_ids = get_not_follow_ids_by_user(users)
+    # nofollow_user_ids += get_not_follow_ids(followings, like_user_ids)
+    # nofollow_user_ids = list(set(nofollow_user_ids))
+    # print(nofollow_user_ids)
 
-    if nofollow_user_ids:
-        for id in nofollow_user_ids:
-            response = twitter_api.post_follow(id)
-            errors = response.get("errors")
-            if errors:
-                code = [error.get('code') for error in errors]
-                if 161 in code or 500 in code:
-                    break
+    # if nofollow_user_ids:
+    #     for id in nofollow_user_ids:
+    #         response = twitter_api.post_follow(id)
+    #         errors = response.get("errors")
+    #         if errors:
+    #             code = [error.get('code') for error in errors]
+    #             if 161 in code or 500 in code:
+    #                 break
 
-    print("Follow SUCCESS!!")
+    # print("Follow SUCCESS!!")
 
     # except Exception as e:
     #     print("ERROR:", e)
